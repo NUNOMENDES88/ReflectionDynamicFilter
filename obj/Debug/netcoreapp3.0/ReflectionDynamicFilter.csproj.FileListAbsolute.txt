@@ -9,3 +9,14 @@ E:\Desenvolvimento\ReflectionDynamicFilter\ReflectionDynamicFilter\bin\Debug\net
 E:\Desenvolvimento\ReflectionDynamicFilter\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.pdb
 E:\Desenvolvimento\ReflectionDynamicFilter\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.dll
 E:\Desenvolvimento\ReflectionDynamicFilter\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.pdb
+E:\Desenvolvimento\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.exe
+E:\Desenvolvimento\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.deps.json
+E:\Desenvolvimento\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.runtimeconfig.json
+E:\Desenvolvimento\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.runtimeconfig.dev.json
+E:\Desenvolvimento\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.dll
+E:\Desenvolvimento\ReflectionDynamicFilter\bin\Debug\netcoreapp3.0\ReflectionDynamicFilter.pdb
+E:\Desenvolvimento\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.csprojAssemblyReference.cache
+E:\Desenvolvimento\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.AssemblyInfoInputs.cache
+E:\Desenvolvimento\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.AssemblyInfo.cs
+E:\Desenvolvimento\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.dll
+E:\Desenvolvimento\ReflectionDynamicFilter\obj\Debug\netcoreapp3.0\ReflectionDynamicFilter.pdb
