@@ -1,0 +1,9 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "C:\\Users\\nuno.mendes.DEVSCOPE\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\nuno.mendes.DEVSCOPE\\.nuget\\packages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+    ]
+  }
+}
