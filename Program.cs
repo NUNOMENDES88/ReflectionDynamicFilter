@@ -3,19 +3,27 @@
     using Enumerations;
     using Helpers;
     using Models;
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     class Program
     {
         static void Main(string[] args)
         {
             var listEmployees = GetListEmployees();
+           
+            //Filter direct by method
             var listFilters1 = new List<FilterModel>()
             {
-                new FilterModel("Id", 1, RelationalOperatorsEnum.GreaterThan),
-                new FilterModel("Name", "i", RelationalOperatorsEnum.Contains)
+                new FilterModel("Salary.Value", 1000, RelationalOperatorsEnum.Equal),
+                new FilterModel("Name", "Mendes", RelationalOperatorsEnum.Contains, LogicalOperatorsEnum.Or)
             };
             var resultFilter1 = listEmployees.Filter(listFilters1);
+
+            //Generate predicate
+            Func<EmployeeModel, bool> newPredicate = FilterHelper.GeneratePredicate<EmployeeModel>(listFilters1);
+            var resultFilter2 = listEmployees.Where(newPredicate);
 
             var listFilters2 = new List<FilterModel>()
             {
@@ -23,7 +31,7 @@
                 new FilterModel("Age", 30, RelationalOperatorsEnum.Equal),
                 new FilterModel("Salary.Value", 2000, RelationalOperatorsEnum.GreaterThan)
             };
-            var resultFilter2 = listEmployees.Filter(listFilters2);
+            var resultFilter3 = listEmployees.Filter(listFilters2);
         }
 
         static List<EmployeeModel> GetListEmployees()

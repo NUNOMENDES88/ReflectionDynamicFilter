@@ -27,7 +27,4 @@
     {
         public int Value { get; set; }
     }
-
-
-
 }

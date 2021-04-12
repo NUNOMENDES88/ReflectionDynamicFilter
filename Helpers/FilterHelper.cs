@@ -21,15 +21,18 @@
         {
             if (source == null)
                 return null;
-
-            var expressionFilter = source.GenerateExpressionFilter(filterList);
-            var predicate = expressionFilter.Compile();
+            Func<T, bool> predicate = GeneratePredicate<T>(filterList);
             return source.Where(predicate);
         }
 
-        private static Expression<Func<T, bool>> GenerateExpressionFilter<T>(
-            this IEnumerable<T> source,
-            List<FilterModel> filterList)
+        public static Func<T, bool> GeneratePredicate<T>(List<FilterModel> filterList)
+        {
+            var expressionFilter = GenerateExpressionFilter<T>(filterList);
+            var predicate = expressionFilter.Compile();
+            return predicate;
+        }
+
+        private static Expression<Func<T, bool>> GenerateExpressionFilter<T>(List<FilterModel> filterList)
         {
             if (filterList.Count == 0)
                 return null;
