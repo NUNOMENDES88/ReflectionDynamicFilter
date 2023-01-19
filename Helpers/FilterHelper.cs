@@ -2,6 +2,7 @@
 {
     using Enumerations;
     using Models;
+    using ReflectionDynamicFilter.Extensions;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -11,24 +12,36 @@
     public static class FilterHelper
     {
         //Get the methods by reflection
-        private static readonly MethodInfo _containsMethod = typeof(string).GetMethod("Contains", new[] {typeof(string)});
-        private static readonly MethodInfo _startsWithMethod = typeof(string).GetMethod("StartsWith", new[] {typeof(string)});
-        private static readonly MethodInfo _endsWithMethod = typeof(string).GetMethod("EndsWith", new[] {typeof(string)});
+        private static readonly MethodInfo ContainsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+        private static readonly MethodInfo StartsWithMethod = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
+        private static readonly MethodInfo EndsWithMethod = typeof(string).GetMethod("EndsWith", new[] { typeof(string) });
 
-        public static IEnumerable<T> Filter<T>(
+        public static IQueryable<T> Filter<T>(
             this IEnumerable<T> source,
             List<FilterModel> filterList)
         {
             if (source == null)
+            {
                 return null;
+            }
+
+            if (filterList == null || !filterList.Any())
+            {
+                return source.AsQueryable();
+            }
             Func<T, bool> predicate = GeneratePredicate<T>(filterList);
-            return source.Where(predicate);
+
+            return source.Where(predicate).AsQueryable();
         }
 
         public static Func<T, bool> GeneratePredicate<T>(List<FilterModel> filterList)
         {
-            var expressionFilter = GenerateExpressionFilter<T>(filterList);
-            var predicate = expressionFilter.Compile();
+            if (filterList == null || !filterList.Any())
+            {
+                return null;
+            }
+            Expression<Func<T, bool>> expressionFilter = GenerateExpressionFilter<T>(filterList);
+            Func<T, bool> predicate = expressionFilter.Compile();
             return predicate;
         }
 
@@ -37,15 +50,15 @@
             if (filterList.Count == 0)
                 return null;
 
-            ParameterExpression objectParameter = Expression.Parameter(typeof(T), "t");
+            ParameterExpression parameter = Expression.Parameter(typeof(T), "t");
             //Get expression for first parameter
-            Expression exp = GetExpression<T>(objectParameter, filterList[0]);
+            Expression exp = GetExpression<T>(parameter, filterList[0]);
 
             if (filterList.Count > 1)
             {
                 for (int i = 1; i < filterList.Count; i++)
                 {
-                    Expression filter = GetExpression<T>(objectParameter, filterList[i]);
+                    Expression filter = GetExpression<T>(parameter, filterList[i]);
                     if (filterList[i].LogicalOperator == LogicalOperatorsEnum.And)
                     {
                         exp = Expression.And(exp, filter);
@@ -57,62 +70,169 @@
                 }
             }
 
-            return Expression.Lambda<Func<T, bool>>(exp, objectParameter);
+            return Expression.Lambda<Func<T, bool>>(exp, parameter);
         }
 
         private static Expression GetExpression<T>(
-            ParameterExpression objectParameter,
-            FilterModel filterModel)
+            ParameterExpression parameterExpression,
+            FilterModel FilterModel)
         {
-            
-            MemberExpression property = GetMemberExpression(objectParameter, filterModel.PropertyName);
-            ConstantExpression constant = Expression.Constant(filterModel.Value);
-            return filterModel.RelationalOperator switch
+            Expression memberExpression = GetMemberExpression(parameterExpression, FilterModel.PropertyName);
+            Expression property = memberExpression.ToLowerProperty();
+
+            object filterValue = FilterModel.Value.ParseData(property.Type);
+            ConstantExpression constant = filterValue.ToLowerContant();
+            Expression filterData = constant;
+
+            bool isNullableGenericType = (property.Type.IsGenericType && property.Type.GetGenericTypeDefinition().Equals(typeof(Nullable<>)));
+            if (isNullableGenericType)
             {
-                RelationalOperatorsEnum.Equal => Expression.Equal(property, constant),
-                RelationalOperatorsEnum.GreaterThan => Expression.GreaterThan(property, constant),
-                RelationalOperatorsEnum.GreaterThanOrEqual => Expression.GreaterThanOrEqual(property, constant),
-                RelationalOperatorsEnum.LessThan => Expression.LessThan(property, constant),
-                RelationalOperatorsEnum.LessThanOrEqual => Expression.LessThanOrEqual(property, constant),
-                RelationalOperatorsEnum.NotEqual => Expression.NotEqual(property, constant),
-                RelationalOperatorsEnum.Contains => Expression.Call(property, _containsMethod, constant),
-                RelationalOperatorsEnum.StartsWith => Expression.Call(property, _startsWithMethod, constant),
-                RelationalOperatorsEnum.EndsWith => Expression.Call(property, _endsWithMethod, constant),
-                _ => null,
-            };
+                filterData = Expression.Convert(constant, memberExpression.Type);
+            }
+
+            Expression selectedExpression;
+            switch (FilterModel.RelationalOperator)
+            {
+                case RelationalOperatorsEnum.Equal:
+                    selectedExpression = Expression.Equal(property, filterData);
+                    break;
+                case RelationalOperatorsEnum.GreaterThan:
+                    selectedExpression = Expression.GreaterThan(property, filterData);
+                    break;
+                case RelationalOperatorsEnum.GreaterThanOrEqual:
+                    selectedExpression = Expression.GreaterThanOrEqual(property, filterData);
+                    break;
+                case RelationalOperatorsEnum.LessThan:
+                    selectedExpression = Expression.LessThan(property, filterData);
+                    break;
+                case RelationalOperatorsEnum.LessThanOrEqual:
+                    selectedExpression = Expression.LessThanOrEqual(property, filterData);
+                    break;
+                case RelationalOperatorsEnum.NotEqual:
+                    selectedExpression = Expression.NotEqual(property, filterData);
+                    break;
+                case RelationalOperatorsEnum.Contains:
+                    selectedExpression = Expression.Call(property, ContainsMethod, filterData);
+                    break;
+                case RelationalOperatorsEnum.StartsWith:
+                    selectedExpression = Expression.Call(property, StartsWithMethod, filterData);
+                    break;
+                case RelationalOperatorsEnum.EndsWith:
+                    selectedExpression = Expression.Call(property, EndsWithMethod, filterData);
+                    break;
+                case RelationalOperatorsEnum.NotContains:
+                    var expression = Expression.Call(property, ContainsMethod, filterData);
+                    selectedExpression = Expression.Not(expression);
+                    break;
+                default:
+                    selectedExpression = null;
+                    break;
+            }
+
+            return selectedExpression.CheckIfPropertysIsNullAndIncrementInConditionExpression(parameterExpression, FilterModel.PropertyName);
         }
 
-        public static MemberExpression GetMemberExpression(this Expression target, string fullPropertyName)
+        private static Expression CheckIfPropertysIsNullAndIncrementInConditionExpression(this Expression selectedExpression, ParameterExpression parameterExpression, string fullPropertyName)
         {
-            var listProperties = fullPropertyName.Split(".").ToList();
-
-            string propertyName;
-            PropertyInfo property;
-            MemberExpression memberExpression;
-            if (listProperties.Count < 1)
+            List<Expression> listExpressions = new List<Expression>();
+            //Expression endCondition = selectedExpression;
+            string propertyName = "";
+            try
             {
-                throw new InvalidOperationException("The value is empty");
+                var listProperties = fullPropertyName.Split(".").ToList();
+                if (listProperties.Count < 1)
+                {
+                    throw new InvalidOperationException("The value is empty");
+                }
+
+                Expression fatherProperty = Expression.PropertyOrField(parameterExpression, listProperties[0]);
+                Expression childProperty = fatherProperty;
+                bool isNullableGenericType;
+
+                for (int index = 0; index < listProperties.Count; index++)
+                {
+
+                    propertyName = listProperties[index];
+                    if (index > 0)
+                    {
+                        childProperty = Expression.PropertyOrField(fatherProperty, listProperties[index]);
+                    }
+                    fatherProperty = childProperty;
+                    isNullableGenericType = (childProperty.Type.IsGenericType && childProperty.Type.GetGenericTypeDefinition().Equals(typeof(Nullable<>)));
+
+                    if ((childProperty.Type == typeof(string) || isNullableGenericType || childProperty.Type.IsClass) && selectedExpression != null)
+                    {
+                        Expression notNull = Expression.NotEqual(childProperty, Expression.Constant(null));
+                        listExpressions.Add(notNull);
+                    }
+                }
+
+                Expression endExpression = selectedExpression;
+
+                for (int index = listExpressions.Count(); index != 0; index--)
+                {
+                    int expressionIndex = index - 1;
+                    endExpression = Expression.AndAlso(listExpressions[expressionIndex], endExpression);
+                }
+
+                return endExpression;
             }
-            propertyName = listProperties[0];
-            property = target.Type.GetProperty(propertyName);
-            if (property == null)
+            catch (ArgumentException)
+            {
+                throw new MissingMemberException("Failed to retrieve a property with name '" + propertyName + "' in type '" + selectedExpression.Type.FullName + "'");
+            }
+        }
+
+        private static Expression ToLowerProperty(this Expression property)
+        {
+
+            if (property.Type == typeof(string))
+            {
+                var lowerExpression = Expression.Call(property, "ToLower", null);
+                return lowerExpression;
+            }
+
+            return property;
+        }
+
+        private static ConstantExpression ToLowerContant(this object filterValue)
+        {
+            object newValue = filterValue;
+            if (filterValue.GetType() == typeof(string))
+            {
+                newValue = filterValue.ToString().ToLower();
+            }
+            return Expression.Constant(newValue);
+        }
+
+        private static Expression GetMemberExpression(this Expression target, string fullPropertyName)
+        {
+            string propertyName = "";
+            try
+            {
+                var listProperties = fullPropertyName.Split(".").ToList();
+                if (listProperties.Count < 1)
+                {
+                    throw new InvalidOperationException("The value is empty");
+                }
+
+                propertyName = listProperties[0];
+                Expression child = Expression.PropertyOrField(target, propertyName);
+                Expression childProperty = child;
+
+                for (int index = 1; index < listProperties.Count; index++)
+                {
+                    propertyName = listProperties[index];
+                    childProperty = Expression.PropertyOrField(child, listProperties[index]);
+                    child = childProperty;
+                }
+                return childProperty;
+            }
+            catch (ArgumentException)
             {
                 throw new MissingMemberException("Failed to retrieve a property with name '" + propertyName + "' in type '" + target.Type.FullName + "'");
             }
-            memberExpression = Expression.MakeMemberAccess(target, property);
-            target = memberExpression;
-            for (int index = 1; index < listProperties.Count; index++)
-            {
-                propertyName = listProperties[index];
-                property = target.Type.GetProperty(propertyName);
-                if (property == null)
-                {
-                    throw new MissingMemberException("Failed to retrieve a property with name '" + propertyName + "' in type '" + target.Type.FullName + "'");
-                }
-                memberExpression = Expression.MakeMemberAccess(target, property);
-                target = memberExpression;
-            }
-            return memberExpression;
+
         }
     }
 }
