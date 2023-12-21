@@ -8,7 +8,6 @@
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
-
     public static class FilterHelper
     {
         //Get the methods by reflection
@@ -20,32 +19,36 @@
             this IEnumerable<T> source,
             List<FilterModel> filterList)
         {
-            if (source == null)
+            if (!source.CheckNotNullAndAny())
             {
                 return null;
             }
 
-            if (filterList == null || !filterList.Any())
+            if (!filterList.CheckNotNullAndAny())
             {
                 return source.AsQueryable();
             }
-            Func<T, bool> predicate = GeneratePredicate<T>(filterList);
 
-            return source.Where(predicate).AsQueryable();
+            try
+            {
+                Func<T, bool> predicate = GeneratePredicate<T>(filterList);
+                return source.Where(predicate).AsQueryable();
+            }
+            catch (Exception)
+            {
+                throw new Exception("Error Invalid Filter Field");
+            }
         }
 
         public static Func<T, bool> GeneratePredicate<T>(List<FilterModel> filterList)
         {
-            if (filterList == null || !filterList.Any())
-            {
-                return null;
-            }
-            Expression<Func<T, bool>> expressionFilter = GenerateExpressionFilter<T>(filterList);
-            Func<T, bool> predicate = expressionFilter.Compile();
+            var expressionFilter = GenerateExpressionFilter<T>(filterList);
+            var predicate = expressionFilter.Compile();
             return predicate;
         }
 
-        private static Expression<Func<T, bool>> GenerateExpressionFilter<T>(List<FilterModel> filterList)
+        public static Expression<Func<T, bool>> GenerateExpressionFilter<T>(
+            List<FilterModel> filterList)
         {
             if (filterList.Count == 0)
                 return null;

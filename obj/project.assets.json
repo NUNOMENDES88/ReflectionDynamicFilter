@@ -8,19 +8,19 @@
     ".NETCoreApp,Version=v3.0": []
   },
   "packageFolders": {
-    "C:\\Users\\User01\\.nuget\\packages\\": {}
+    "C:\\Users\\Nuno Mendes\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Desenvolvimentos\\Nuno\\ReflectionDynamicFilter.csproj",
+      "projectUniqueName": "E:\\Desenvolvimento\\Libs\\ReflectionDynamicFilter\\ReflectionDynamicFilter.csproj",
       "projectName": "ReflectionDynamicFilter",
-      "projectPath": "C:\\Desenvolvimentos\\Nuno\\ReflectionDynamicFilter.csproj",
-      "packagesPath": "C:\\Users\\User01\\.nuget\\packages\\",
-      "outputPath": "C:\\Desenvolvimentos\\Nuno\\obj\\",
+      "projectPath": "E:\\Desenvolvimento\\Libs\\ReflectionDynamicFilter\\ReflectionDynamicFilter.csproj",
+      "packagesPath": "C:\\Users\\Nuno Mendes\\.nuget\\packages\\",
+      "outputPath": "E:\\Desenvolvimento\\Libs\\ReflectionDynamicFilter\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\User01\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Nuno Mendes\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -28,9 +28,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://git.worten.net/api/v4/groups/2530/-/packages/nuget/index.json": {},
-        "https://git.worten.net/api/v4/projects/2094/packages/nuget/index.json": {}
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "netcoreapp3.0": {
@@ -53,8 +51,7 @@
           "net47",
           "net471",
           "net472",
-          "net48",
-          "net481"
+          "net48"
         ],
         "assetTargetFallback": true,
         "warn": true,
@@ -81,7 +78,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.402\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
       }
     }
   }
